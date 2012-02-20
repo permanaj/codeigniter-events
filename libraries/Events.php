@@ -43,12 +43,14 @@ class Events {
 	 * @access	public
 	 * @param	string	The name of the event
 	 * @param	array	The callback for the Event
+	 * @param   int		Priority. Lower executed earlier
 	 * @return	void
 	 */
-	public static function register($event, array $callback)
+	public static function register($event, array $callback, $priority = 3)
 	{
 		$key = get_class($callback[0]).'::'.$callback[1];
-		self::$_listeners[$event][$key] = $callback;
+		self::$_listeners[$event][(int)$priority][$key] = $callback;
+		ksort(self::$_listeners[$event]);
 		log_message('debug', 'Events::register() - Registered "'.$key.' with event "'.$event.'"');
 	}
 
@@ -77,11 +79,14 @@ class Events {
 
 		if (self::has_listeners($event))
 		{
-			foreach (self::$_listeners[$event] as $listener)
+			foreach (self::$_listeners[$event] as $listeners)
 			{
-				if (is_callable($listener))
+				foreach ( $listeners as $listener)
 				{
-					$calls[] = call_user_func($listener, $data);
+					if (is_callable($listener))
+					{
+						$calls[] = call_user_func($listener, $data);
+					}
 				}
 			}
 		}
